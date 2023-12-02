@@ -5,7 +5,7 @@ import alpaca
 import plotly.express as px
 from plotly import graph_objs as go
 from datetime import datetime, date, timedelta
-import scipy.stats as st
+import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
@@ -44,7 +44,7 @@ historical_client = StockHistoricalDataClient(api_key, api_secret)
 request_params = StockBarsRequest(
                     symbol_or_symbols=["SPXL","SPXS"],
                     timeframe=TimeFrame.Minute,
-                    start="2023-08-22 00:00:00",
+                    start="2022-09-22 00:00:00",
                     end = "2023-09-22 23:59:00")
 
 # Retreive the data object 
@@ -88,9 +88,6 @@ print("Median SPXL Growth: ",df.spxl_growth.median().round(3))
 
 print('\n~~ SPXS ~~')
 print("--------------------")
-spxs_bb = st.norm.interval(confidence=0.95, loc=np.mean(df.spxs_growth), scale=st.sem(df.spxs_growth))
-print("SPXS Lower Bound: ",spxs_bb[0].round(5),"\nSPXS Upper Bound: ",spxs_bb[1].round(5))
-
 print("\nMax SPXS Growth: ", df.spxs_growth.max().round(3))
 print("Min SPXS Growth: ", df.spxs_growth.min().round(3))
 print("\nMean SPXS Growth: ",df.spxs_growth.mean().round(3))
@@ -147,17 +144,17 @@ for idx1 in range(len(df)-1):
         numb_of_trades = numb_of_trades + 1
 
         df = df.copy()
-    if df.spxs_growth[idx2] >= df.spxs_upper2[idx2]:
+    elif df.spxs_growth[idx2] >= df.spxs_upper2[idx2]:
         # if df.spxs_growth[idx2] >= 0.033362023346761444:
-            
+            # Sell the difference between spxl price at time 2 and spxl price at time 1
             sell = spxs2 - spxs1
             
             df.loc[idx2:,'spxs_shares'] = (spxs1 / spxs2) * df.spxs_shares[idx1]
             
             df.loc[idx2:,'tot_spxs'] = df.spxs_shares[idx2] * spxs2
             
-            #I dont know why it works but it works
             plus_shares = sell / spxl2
+            #I dont know why it works but it works
             # plus_shares = sell / spxs2
             
             df.loc[idx2:,'spxl_shares'] = df.spxl_shares[idx1] + plus_shares
@@ -167,8 +164,9 @@ for idx1 in range(len(df)-1):
             numb_of_trades = numb_of_trades + 1
 
             df = df.copy() 
-        
-print("\nTotal Number of Trades: ", numb_of_trades)
+
+# # Remove hashtag to import the ouput dataframe to excel   
+# df.to_excel('pachira_aquatica.xlsx')
 
 beg_investment = df.tot_spxl.head(1).values + df.tot_spxs.head(1).values
 end_indvestment = df.tot_spxs.tail(1).values + df.tot_spxl.tail(1).values
@@ -177,7 +175,8 @@ profit_margin = (total_profit / end_indvestment) * 100
 
 print("\n\nRESULTS")
 print('----------------')
-print("Ending Investment Value")
+print("Total Number of Trades: ", numb_of_trades)
+print("\nEnding Investment Value")
 print(round(end_indvestment[0],3))
 print("\nBeginning Investment Value")
 print(round(beg_investment[0],3))
@@ -186,6 +185,8 @@ print(round(total_profit[0],3)),
 print("\nProfit Margin")
 print(round(profit_margin[0],3),"%")
 
+# Show df on GUI
+st.dataframe(data = df)
 
 df_plt = df.tail(100)
 #.set_index('timestamp')
