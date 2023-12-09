@@ -7,8 +7,8 @@ from plotly import graph_objs as go
 from datetime import datetime, date, timedelta
 import streamlit as st
 import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib as mpl
+# import matplotlib.pyplot as plt
+# import matplotlib as mpl
 #mpl.rc('figure', figsize=(12, 10))
 
 # Creates header in GUI
