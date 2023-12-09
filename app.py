@@ -83,9 +83,9 @@ def subset(date1,date2):
         SPXS1 = df.SPXS[idx1]
         # Price of SPXL at time 2
         SPXS2 = df.SPXS[idx2]
+
+        # If SPXL % growth is greater or equal to the upper bound of SPXL % growth then sell SPXL and buy SPXS
         if df.SPXL_growth[idx2] >= df.SPXL_upper1[idx2]:
-        # if df.SPXL_growth[idx2] >= 0.00119:
-        #if df.SPXL_growth[idx2] >= 0.006916492916150138:
             # Sell the difference between SPXL price at time 2 and SPXL price at time 1
             sell = SPXL2 - SPXL1
             # New SPXL share count at time 2 is (SPXL price at time 1 divided by SPXL price at time 2) multiplied by our SPXL share count at time 1
@@ -103,83 +103,94 @@ def subset(date1,date2):
             df.loc[idx2:,'num_of_trades'] = df.num_of_trades[idx1] + 1
             df = df.copy()
         elif df.SPXS_growth[idx2] >= df.SPXS_upper2[idx2]:
-            # if df.SPXS_growth[idx2] >= 0.033362023346761444:
-                # Sell the difference between SPXL price at time 2 and SPXL price at time 1
-                sell = SPXS2 - SPXS1
-                df.loc[idx2:,'SPXS_shares'] = (SPXS1 / SPXS2) * df.SPXS_shares[idx1]
-                df.loc[idx2:,'SPXS MV'] = df.SPXS_shares[idx2] * SPXS2
-                plus_shares = sell / SPXL2
-                #I dont know why it works but it works
-                # plus_shares = sell / SPXS2
-                df.loc[idx2:,'SPXL_shares'] = df.SPXL_shares[idx1] + plus_shares
-                df.loc[idx2:,'SPXL MV'] = df.SPXL_shares[idx2] * SPXL2
-                df.loc[idx2:,'num_of_trades'] = df.num_of_trades[idx1] + 1
-                df = df.copy() 
+            # Sell the difference between SPXL price at time 2 and SPXL price at time 1
+            sell = SPXS2 - SPXS1
+            df.loc[idx2:,'SPXS_shares'] = (SPXS1 / SPXS2) * df.SPXS_shares[idx1]
+            df.loc[idx2:,'SPXS MV'] = df.SPXS_shares[idx2] * SPXS2
+            plus_shares = sell / SPXL2
+            #I dont know why it works but it works
+            # plus_shares = sell / SPXS2
+            df.loc[idx2:,'SPXL_shares'] = df.SPXL_shares[idx1] + plus_shares
+            df.loc[idx2:,'SPXL MV'] = df.SPXL_shares[idx2] * SPXL2
+            df.loc[idx2:,'num_of_trades'] = df.num_of_trades[idx1] + 1
+            df = df.copy() 
     df = df.drop(columns = {'index','Unnamed: 0'})
     df['Total MV'] = df['SPXL MV'].values + df['SPXS MV'].values
     return df
-    # # Remove hashtag to import the ouput dataframe to excel   
-    # df.to_excel('pachira_aquatica.xlsx')
 
 def stats(df):
+    # Beginning investment value is beginning spxl mv + beginning spxs mv
     beg_investment = df['SPXL MV'].head(1).values + df['SPXS MV'].head(1).values
+    # Ending investment value is ending spxl mv + ending spxs mv
     end_indvestment = df['SPXS MV'].tail(1).values + df['SPXL MV'].tail(1).values
+    # total profit is ending investment value - beginning investment value
     total_profit = end_indvestment - beg_investment
+    # Profit margin is total profit divided by final sale of shares at mv
     profit_margin = (total_profit / end_indvestment) * 100
+    # finds the total number of trades by looking at the last value in the 'num_of_trades' column of df
     tot_num_trades = df.num_of_trades.tail(1).values 
     
-    trades = "Total Number of Trades: " + str(round(tot_num_trades[0],3)) 
-    end_inv_value = "Ending MV: " + str(round(end_indvestment[0],3)) 
-    beg_inv_value = "Beginning MV: " + str(round(beg_investment[0],3)) 
-    tot_prof = "Total Profit: " + str(round(total_profit[0],3)) 
-    pm = "Profit Margin: " + str(round(profit_margin[0],3))
+    # Displaying results on gui
+    trades = "Total Number of Trades: " + str(round(tot_num_trades[0],2)) 
+    end_inv_value = "Ending MV: $" + str(round(end_indvestment[0],2)) 
+    beg_inv_value = "Beginning MV: $" + str(round(beg_investment[0],2)) 
+    tot_prof = "Total Profit: $" + str(round(total_profit[0],2)) 
+    pm = "Profit Margin: " + str(round(profit_margin[0],2)) + "%"
     return st.markdown(trades),st.markdown(end_inv_value),st.markdown(beg_inv_value),st.markdown(tot_prof),st.markdown(pm)
 
-def plot(df2, options):
+def plot(df2, options,t):
+    # Create an empty figure instance
     fig = go.Figure()
-        #fig.add_trace(go.Scatter(x = self.tkr_df['Date'], y = self.tkr_df.loc[:,('Close','AAPL')]))
+    # If the multi-select option is a single option, it won't be in a list type so it doesn't need to go into a forloop
     if type(options) == str:
         fig.add_trace(go.Scatter(x = df2['Time Stamp'], y = df2.loc[:,options], name = options))
+    # If the multi-select option is multiple options, it will be a list type object so it does need to go into a forloop
     else:
         for option in options:
-            #tt = str(tt)
             fig.add_trace(go.Scatter(x = df2['Time Stamp'], y = df2.loc[:,option], name = option))
-    fig.update_layout(title = "MV Over Time")
+    fig.update_layout(title = t)
     return st.plotly_chart(fig,use_container_width=True)
     
 @st.cache_data
 def convert_df(data):
     # IMPORTANT: Cache the conversion to prevent computation on every rerun
     return data.to_csv().encode('utf-8')
-#Create excel file
-#excel_df = df.to_excel("pachira_aquatica.xlsx")
-
 
 # Show df on GUI
 with st.sidebar:
-    date1 = st.date_input("pick a date to start investing")
-    date2 = st.date_input("pick a date to end investing")
+    date1 = st.date_input("Pick a date to start investing")
+    date2 = st.date_input("Pick a date to end investing")
 
 if (date1 != None) & (date2 != None) & (date1 != date2):
+    # Create subset of data lake with the input dates
     df = subset(date1,date2)
+    # Create a streamlit df object on gui
     st.dataframe(df)
+    # Convert df to csv by calling convert_df function
     csv = convert_df(df)
-
+    # Create download button on gui
     st.download_button(
         label="Download data as CSV",
         data=csv,
         file_name='trade_data.csv',
         mime='text/csv',
     )
+    # Add results to sidebar
+    with st.sidebar:
+        st.subheader('Results')
+        stats(df)
 
-    st.subheader('Results')
-    stats(df)
+    #Get price graph
+    plot(df,['SPXL','SPXS'],'Price Per Share')
 
-    price_options = st.multiselect("Graph Price",['SPXL MV', 'SPXS MV'],default = 'Total MV')
-    
+    # Get shares graph
+    plot(df,['SPXL_shares','SPXS_shares'],"Shares Over Time")
+
+    # Multi-select button
     iv_options = st.multiselect("Graph MV",['Total MV', 'SPXL MV', 'SPXS MV'],default = 'Total MV')
-    # Retrieve plot from plot function
-    plot(df,iv_options)
+    
+    # Get MV graph
+    plot(df,iv_options, "Total MV Over Time")
 
     
 

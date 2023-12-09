@@ -38,8 +38,8 @@ historical_client = StockHistoricalDataClient(api_key, api_secret)
 request_params = StockBarsRequest(
                     symbol_or_symbols=["SPXL","SPXS"],
                     timeframe=TimeFrame.Minute,
-                    start="2021-12-01 00:00:00",
-                    end = "2023-12-01 23:59:00")
+                    start="2019-12-01 00:00:00",
+                    end = "2023-12-08 23:59:00")
 
 # Retreive the data object 
 bars = historical_client.get_stock_bars(request_params)
@@ -55,8 +55,8 @@ data = pd.DataFrame([new_bars.timestamp,new_bars.SPXL.open,new_bars.SPXS.open]).
 # Drop column that has duplicated column name
 df = data.loc[:, ~data.columns.duplicated()].copy()
 # Renaming first instance of 'open' (renaming SPXL opening price column from open to 'spxl')
-df.rename(columns={'open':'spxl'},inplace=True)
+df.rename(columns={'open':'SPXL'},inplace=True)
 # Renaming second instance of 'open' (Renaming SPXS opening price column from open to 'spxs')
-df['spxs'] = data.loc[:,data.columns.duplicated()].copy()
-
+df['SPXS'] = data.loc[:,data.columns.duplicated()].copy()
+#create data csv
 df.to_csv('data.csv')
