@@ -116,6 +116,7 @@ def subset(date1,date2):
             df = df.copy() 
     df = df.drop(columns = {'index','Unnamed: 0'})
     df['Total MV'] = df['SPXL MV'].values + df['SPXS MV'].values
+    df['Total PPS'] = df['SPXS'].values + df['SPXL'].values
     return df
 
 def stats(df):
@@ -165,7 +166,8 @@ if (date1 != None) & (date2 != None) & (date1 != date2):
     # Create subset of data lake with the input dates
     df = subset(date1,date2)
     # Create a streamlit df object on gui
-    st.dataframe(df)
+    st.dataframe(df.head(5))
+    st.dataframe(df.tail(5))
     # Convert df to csv by calling convert_df function
     csv = convert_df(df)
     # Create download button on gui
@@ -179,15 +181,22 @@ if (date1 != None) & (date2 != None) & (date1 != date2):
     with st.sidebar:
         st.subheader('Results')
         stats(df)
-
+    
+    # Multi-select button
+    px_options = st.multiselect("Price Per Share Graphing Options",['SPXL', 'SPXL_growth','SPXL_sma', 
+                                                                    'SPXL_upper1','SPXL_upper2','SPXS', 
+                                                                    'SPXS_sma','SPXS_upper1',
+                                                                    'SPXS_upper2',
+                                                                    'SPXS_growth'],default = ['SPXL','SPXS'])
+    
     #Get price graph
-    plot(df,['SPXL','SPXS'],'Price Per Share')
+    plot(df,px_options,'Price Per Share')
 
     # Get shares graph
     plot(df,['SPXL_shares','SPXS_shares'],"Shares Over Time")
 
     # Multi-select button
-    iv_options = st.multiselect("Graph MV",['Total MV', 'SPXL MV', 'SPXS MV'],default = 'Total MV')
+    iv_options = st.multiselect("Graph MV",['Total MV', 'SPXL MV', 'SPXS MV','Total PPS','SPXL','SPXS'],default = 'Total MV')
     
     # Get MV graph
     plot(df,iv_options, "Total MV Over Time")
